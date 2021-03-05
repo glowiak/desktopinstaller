@@ -1,0 +1,312 @@
+#!/bin/sh
+
+main_menu()
+{
+    clear
+    echo "desktopinstaller for FreeBSD"
+    echo "############################"
+    echo "[1] Start The Installation"
+    echo "[2] Exit desktopinstaller"
+    echo -n "[Selection] "
+    read sel1
+    case "${sel1}" in
+        1)
+            setup_firmware
+            ;;
+        2)
+            exit 0
+            ;;
+        *)
+            echo "Enter a correct number!"
+            main_menu
+    esac
+}
+setup_firmware()
+{
+    clear
+    echo "Firmware Setup"
+    echo "##############"
+    echo "[1] Intel HD Graphics"
+    echo "[2] AMD GPU"
+    echo "[3] Radeon KMS"
+    echo "[4] VMWare/VirtualBox Graphics"
+    echo "[5] NVidia Propertiary Drivers"
+    echo -n "[Selection] "
+    read sel2
+    case "${sel2}" in
+        1)
+            pkg install -y drm-kmod
+            kldload /boot/modules/i915kms.ko
+            sysrc kld_list="/boot/modules/i915kms.ko"
+            setup_editor
+            ;;
+        2)
+            pkg install -y drm-kmod
+            kldload /boot/modules/amdgpu.ko
+            sysrc kld_list="/boot/modules/amdgpu.ko"
+            setup_editor
+            ;;
+        3)
+            pkg install -y drm-kmod
+            kldload /boot/modules/radeonkms.ko
+            sysrc kld_list="/boot/modules/radeonkms.ko"
+            setup_editor
+            ;;
+        4)
+            pkg install -y xf86-video-vmware x86-video-vboxvideo
+            setup_editor
+            ;;
+        5)
+            pkg install -y nvidia-driver nvidia-driver-96xx nvidia-driver-71xx
+            kldload nvidia
+            echo 'nvidia_load="YES"' >> /boot/loader.conf
+            echo "edit xorg.conf, and change 'nv' driver to 'nvidia'"
+            read pause1
+            setup_editor
+            ;;
+        *)
+            echo "enter correct option"
+            setup_firmware
+            ;;
+    esac
+}
+setup_editor()
+{
+    clear
+    echo "Select Editor"
+    echo "#############"
+    echo "[1] VIM"
+    echo "[2] nano"
+    echo -n "[Selection] "
+    read sel3
+    case "${sel3}" in
+        1)
+            pkg install -y vim
+            export EDITOR=vim
+            setup_user
+            ;;
+        2)
+            pkg install -y nano
+            export EDITOR=nano
+            setup_user
+            ;;
+        *)
+            echo "enter correct number!"
+            setup_editor
+            ;;
+    esac
+}
+setup_user()
+{
+    clear
+    echo "Adding user"
+    echo "###########"
+    echo "Remember to add user to 'wheel' and 'video' groups"
+    echo -n "Your username: "
+    read sel4
+    adduser "${sel4}"
+    pw groupmod operator -m ${sel4}
+    pw groupmod wheel -m ${sel4}
+    pw groupmod video -m ${sel4}
+    setup_desktop
+}
+setup_desktop()
+{
+    clear
+    echo "Desktop Setup"
+    echo "#############"
+    echo "[1] XFCE4"
+    echo "[2] KDE Plasma 5"
+    echo "[3] GNOME Desktop"
+    echo "[4] Lumina"
+    echo "[5] Common Desktop Environment (CDE)"
+    echo -n "[Selection] "
+    read sel5
+    case "${sel5}" in
+        1)
+            pkg install -y xorg xfce4 xfce4-goodies dbus
+            echo "exec startxfce4" > /usr/home/${sel4}/.xinitrc
+            sysrc dbus_enable=YES
+            setup_dm
+            ;;
+        2)
+            pkg install -y xorg kde5 dbus
+            echo "exec ck-launch-session startplasma-x1" > /usr/home/${sel4}/.xinitrc
+            sysrc dbus_enable=YES
+            setup_dm
+            ;;
+        3)
+            pkg install -y xorg gnome3 gdm dbus
+            sysrc gnome_enable=YES
+            sysrc moused_enable=YES
+            sysrc dbus_enable=YES
+            sysrc hald_enable=YES
+            sysrc gdm_enable=YES
+            setup_www
+            ;;
+            
+        4)
+            pkg install -y xorg lumina dbus
+            sysrc dbus_enable=YES
+            echo "exec start-lumina-desktop" > /usr/home/${sel4}/.xinitrc
+            setup_dm
+            ;;
+        5)
+            pkg install -y xorg cde dbus
+            sysrc dbus_enable=YES
+            sysrc rpcbind_enable=YES
+            sysrc dtspc_enable=YES
+            sysrc dtcms_enable=YES
+            cp /usr/local/dt/bin/Xsession /usr/home/${sel4}/.xinitrc
+            cp /usr/local/dt/bin/Xsession /usr/home/${sel4}/.Xsession
+            cp /usr/local/dt/bin/Xsession /usr/home/${sel4}/.xsession
+            setup_dm
+            ;;
+        *)
+            echo "enter correct option!"
+            setup_desktop
+            ;;
+    esac
+}
+setup_dm()
+{
+    clear
+    echo "Display Manager Setup"
+    echo "#####################"
+    echo "[1] SLiM"
+    echo "[2] SDDM"
+    echo "[3] No display manager (needed if you selected CDE before)"
+    echo -n "[Selection] "
+    read sel6
+    case "${sel6}" in
+        1)
+            pkg install -y slim slim-themes
+            sysrc slim_enable=YES
+            setup_www
+            ;;
+        2)
+            pkg install -y sddm
+            sysrc sddm_enable=YES
+            setup_www
+            ;;
+        3)
+            setup_www
+            ;;
+        *)
+            echo "enter correct option!"
+            setup_dm
+            ;;
+    esac
+}
+setup_www()
+{
+    clear
+    echo "Web Browser Setup"
+    echo "#################"
+    echo "[1] Firefox"
+    echo "[2] Chromium"
+    echo "[3] No web browser"
+    echo -n "[Selection] "
+    read sel7
+    case "${sel7}" in
+        1)
+            pkg install -y firefox
+            setup_lowriter
+            ;;
+        2)
+            pkg install -y chromium
+            setup_lowriter
+            ;;
+        3)
+            setup_lowriter
+            ;;
+        *)
+            echo "enter correct option!"
+            setup_www
+            ;;
+    esac
+}
+setup_lowriter()
+{
+    clear
+    echo "Install Libreoffice?"
+    echo "####################"
+    echo "[1] Yes"
+    echo "[2] No"
+    echo -n "[Selection] "
+    read sel8
+    case "${sel8}" in
+        1)
+            pkg install -y libreoffice
+            setup_fstab
+            ;;
+        2)
+            setup_fstab
+            ;;
+        *)
+            echo "enter correct option"
+            setup_lowriter
+            ;;
+    esac
+}
+setup_fstab()
+{
+    echo "proc /proc procfs rw 0 0" >> /etc/fstab
+    echo "fdesc /dev/fd fdescfs rw 0 0" >> /etc/fstab
+    mount -a
+    setup_lin_abi
+}
+setup_lin_abi()
+{
+    clear
+    echo "Linux ABI"
+    echo "#########"
+    echo "[1] Install only binary support"
+    echo "[2] Install full support for Linux apps"
+    echo "[3] I don't want any Linux ABI"
+    echo -n "[Selection] "
+    read sel9
+    case "${sel9}" in
+        1)
+            kldload linux
+            kldload linux64
+            echo 'linux_load="YES"' >> /boot/loader.conf
+            echo 'linux64_load="YES"' >> /boot/loader.conf
+            setup_done
+            ;;
+        2)
+            kldload linux
+            kldload linux64
+            echo 'linux_load="YES"' >> /boot/loader.conf
+            echo 'linux64_load="YES"' >> /boot/loader.conf
+            pkg install -y linux-c7
+            echo "linprocfs /compat/linux/proc linprocfs rw 0 0" >> /etc/fstab
+            echo "linsysfs /compat/linux/sys linsysfs rw 0 0" >> /etc/fstab
+            echo "tmpfs /compat/linux/dev/shm tmpfs rw,mode=1777 0 0" >> /etc/fstab
+            mount -a
+            setup_done
+}
+setup_done()
+{
+    clear
+    echo "Install complete."
+    echo "Reboot?"
+    echo "##################"
+    echo "[1] Yes, reboot"
+    echo "[2] No, I'll reboot manually"
+    echo -n "[Selection] "
+    read sel10
+    case "${sel10}" in
+        1)
+            reboot
+            ;;
+        2)
+            exit 0
+            ;;
+        *)
+            echo "enter correct option!"
+            setup_done
+            ;;
+    esac
+}
+main_menu
