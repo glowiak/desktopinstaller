@@ -29,7 +29,7 @@ setup_firmware()
     echo "[1] Intel HD Graphics"
     echo "[2] AMD GPU"
     echo "[3] Radeon KMS"
-    echo "[4] VMWare/VirtualBox Graphics"
+    echo "[4] VMWare Graphics"
     echo "[5] NVidia Propertiary Drivers"
     echo -n "[Selection] "
     read sel2
@@ -53,7 +53,7 @@ setup_firmware()
             setup_editor
             ;;
         4)
-            pkg install -y xf86-video-vmware x86-video-vboxvideo
+            pkg install -y xf86-video-vmware
             setup_editor
             ;;
         5)
@@ -120,18 +120,19 @@ setup_desktop()
     echo "[3] GNOME Desktop"
     echo "[4] Lumina"
     echo "[5] Common Desktop Environment (CDE)"
+    echo "[6] IceWM"
     echo -n "[Selection] "
     read sel5
     case "${sel5}" in
         1)
-            pkg install -y xorg xfce4 xfce4-goodies dbus
-            echo "exec startxfce4" > /usr/home/${sel4}/.xinitrc
+            pkg install -y xorg xfce xfce4-goodies dbus
+            echo "exec startxfce4" > /home/${sel4}/.xinitrc
             sysrc dbus_enable=YES
             setup_dm
             ;;
         2)
             pkg install -y xorg kde5 dbus
-            echo "exec ck-launch-session startplasma-x1" > /usr/home/${sel4}/.xinitrc
+            echo "exec ck-launch-session startplasma-x1" > /home/${sel4}/.xinitrc
             sysrc dbus_enable=YES
             setup_dm
             ;;
@@ -148,7 +149,7 @@ setup_desktop()
         4)
             pkg install -y xorg lumina dbus
             sysrc dbus_enable=YES
-            echo "exec start-lumina-desktop" > /usr/home/${sel4}/.xinitrc
+            echo "exec start-lumina-desktop" > /home/${sel4}/.xinitrc
             setup_dm
             ;;
         5)
@@ -157,9 +158,14 @@ setup_desktop()
             sysrc rpcbind_enable=YES
             sysrc dtspc_enable=YES
             sysrc dtcms_enable=YES
-            cp /usr/local/dt/bin/Xsession /usr/home/${sel4}/.xinitrc
-            cp /usr/local/dt/bin/Xsession /usr/home/${sel4}/.Xsession
-            cp /usr/local/dt/bin/Xsession /usr/home/${sel4}/.xsession
+            cp /usr/local/dt/bin/Xsession /home/${sel4}/.xinitrc
+            cp /usr/local/dt/bin/Xsession /home/${sel4}/.Xsession
+            cp /usr/local/dt/bin/Xsession /home/${sel4}/.xsession
+            setup_dm
+            ;;
+        6)
+            pkg install -y icewm
+            echo "exec icewm-session" > /home/${sel4}/.xinitrc
             setup_dm
             ;;
         *)
